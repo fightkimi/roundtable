@@ -1,0 +1,6 @@
+.env
+node_modules/
+.DS_Store
+.claude/
+assets/avatars/contact-sheet.png
+assets/avatars/anime-contact-sheet-*.png
