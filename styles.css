@@ -827,24 +827,76 @@ label { display: block; margin: 14px 0 6px; font-size: 13px; font-weight: 700; c
 }
 .toast.show { opacity: 1; }
 
-/* ── Thread generating indicator ────────────────────────────── */
-.thread-generating {
+/* ── Session generating progress card ───────────────────────── */
+.gen-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 48px 32px;
+  max-width: 480px;
+}
+.gen-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-left: 2px solid var(--line);
+  padding-left: 20px;
+  margin-left: 8px;
+  position: relative;
+}
+.gen-step:last-child { border-left-color: transparent; }
+.gen-icon {
+  position: absolute;
+  left: -9px;
+  top: 14px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--line);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px 20px;
-  color: var(--muted);
-  font-size: 13px;
-}
-.generating-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: pulse-dot 1.2s ease-in-out infinite;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--panel);
   flex-shrink: 0;
+  line-height: 1;
 }
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.75); }
+.gen-step-done .gen-icon {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.gen-step-active .gen-icon {
+  border-color: var(--accent);
+}
+.gen-step-pending .gen-icon {
+  background: var(--paper);
+}
+.gen-spin {
+  border-top-color: var(--accent) !important;
+  animation: spin-icon 0.9s linear infinite;
+}
+@keyframes spin-icon {
+  to { transform: rotate(360deg); }
+}
+.gen-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 0px;
+}
+.gen-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.gen-step-pending .gen-label { color: var(--muted); }
+.gen-detail {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
 }

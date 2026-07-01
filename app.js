@@ -452,6 +452,7 @@ let apiStatus = {
   message: location.protocol === "file:" ? "请用本地服务打开以启用模型生成" : "正在检测本地服务",
 };
 let isBusy = false;
+let generatingStep = 0; // 0=空闲, 1=召集嘉宾中, 2=生成首轮中
 
 function createFreshState(topic = initialTopic, attachments = []) {
   const now = new Date().toISOString();
@@ -1039,6 +1040,36 @@ function buildFinalReportHtml() {
 }
 
 function renderThread() {
+  if (generatingStep > 0) {
+    const panelReady = generatingStep >= 2;
+    const panelNames = panelReady
+      ? state.participants.slice(0, 3).map((p) => escapeHtml(p.name)).join("、") + (state.participants.length > 3 ? " 等" : "")
+      : "";
+    els.thread.innerHTML = `<div class="gen-steps">
+      <div class="gen-step gen-step-done">
+        <span class="gen-icon">✓</span>
+        <div class="gen-body">
+          <span class="gen-label">议题确认</span>
+          <span class="gen-detail">${escapeHtml(state.topic)}</span>
+        </div>
+      </div>
+      <div class="gen-step ${panelReady ? "gen-step-done" : "gen-step-active"}">
+        <span class="gen-icon ${panelReady ? "" : "gen-spin"}"></span>
+        <div class="gen-body">
+          <span class="gen-label">${panelReady ? "思想席已组建" : "召集思想席嘉宾…"}</span>
+          ${panelReady ? `<span class="gen-detail">${panelNames}</span>` : ""}
+        </div>
+      </div>
+      <div class="gen-step ${panelReady ? "gen-step-active" : "gen-step-pending"}">
+        <span class="gen-icon ${panelReady ? "gen-spin" : ""}"></span>
+        <div class="gen-body">
+          <span class="gen-label">${panelReady ? "开启首轮研讨…" : "开启首轮研讨"}</span>
+        </div>
+      </div>
+    </div>`;
+    requestAnimationFrame(() => { els.thread.scrollTop = 0; });
+    return;
+  }
   const rounds = state.rounds.slice(0, state.roundIndex + 1);
   let html = "";
   rounds.forEach((round) => {
@@ -1048,9 +1079,6 @@ function renderThread() {
   });
   if (state.completed && state.finalReport) {
     html += buildFinalReportHtml();
-  }
-  if (isBusy) {
-    html += `<div class="thread-generating"><span class="generating-dot"></span><span class="generating-text">AI 正在生成研讨内容…</span></div>`;
   }
   els.thread.innerHTML = html;
   requestAnimationFrame(() => { els.thread.scrollTop = els.thread.scrollHeight; });
@@ -1069,7 +1097,7 @@ function renderSessions() {
     <div class="group-label">当前</div>
     <div class="session-item session-current" role="listitem">
       <div class="session-item-title">${escapeHtml(state.topic)}</div>
-      <div class="session-item-meta">${state.rounds.length} 轮 · ${escapeHtml(modeLabel)}${state.completed ? " · 已结论" : ""}</div>
+      <div class="session-item-meta">${generatingStep > 0 ? "组建中…" : `${state.rounds.length} 轮 · ${escapeHtml(modeLabel)}${state.completed ? " · 已结论" : ""}`}</div>
     </div>
     ${others.length ? `
       <div class="group-label">历史</div>
@@ -1328,12 +1356,15 @@ async function startSession() {
   const attachments = state.attachments || [];
   archiveCurrentSession({ silent: true });
   state = createFreshState(topic, attachments);
-  renderAll();                         // 立即渲染本地草稿，用户可见内容
+  generatingStep = 1;
+  renderAll();                          // 立即显示步骤进度卡（步骤1完成，步骤2进行中）
   await replacePanelFromApi(topic);
-  renderParticipantChips();            // 嘉宾确认后立即更新头像芯片
-  renderSessions();
+  generatingStep = 2;
+  renderParticipantChips();             // 嘉宾芯片更新
+  renderSessions();                     // 侧边栏 meta 同步
+  renderThread();                       // 步骤2完成，步骤3进行中
   await replaceCurrentRoundFromApi("initiate");
-  renderThread();                      // 首轮 AI 内容就绪后更新对话流
+  generatingStep = 0;
   await refreshTopicSuggestions({ silent: true });
   renderAll();
   showToast(apiStatus.mode === "llm" ? "已动态组局并开始研讨" : "已本地组局并开始研讨");
