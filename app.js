@@ -240,43 +240,28 @@ const moderatorAvatar = "assets/avatars/avatar-34.png";
 
 const els = {
   topicInput: document.querySelector("#topicInput"),
-  attachmentInput: document.querySelector("#attachmentInput"),
-  uploadAttachmentBtn: document.querySelector("#uploadAttachmentBtn"),
-  attachmentList: document.querySelector("#attachmentList"),
   startBtn: document.querySelector("#startBtn"),
   resetBtn: document.querySelector("#resetBtn"),
   newSessionBtn: document.querySelector("#newSessionBtn"),
-  saveSessionBtn: document.querySelector("#saveSessionBtn"),
-  clearSavedBtn: document.querySelector("#clearSavedBtn"),
-  sessionMeta: document.querySelector("#sessionMeta"),
+  newSessionModal: document.querySelector("#newSessionModal"),
+  closeNewSessionBtn: document.querySelector("#closeNewSessionBtn"),
   savedSessionList: document.querySelector("#savedSessionList"),
-  participantList: document.querySelector("#participantList"),
-  timelineStrip: document.querySelector("#timelineStrip"),
-  transcript: document.querySelector("#transcript"),
-  roundBadge: document.querySelector("#roundBadge"),
-  contradictionTitle: document.querySelector("#contradictionTitle"),
-  contradictionCopy: document.querySelector("#contradictionCopy"),
-  roundtableVisual: document.querySelector("#roundtableVisual"),
-  moderatorSummary: document.querySelector("#moderatorSummary"),
-  asciiChart: document.querySelector("#asciiChart"),
-  nextQuestion: document.querySelector("#nextQuestion"),
-  metricList: document.querySelector("#metricList"),
-  knowledgeNetwork: document.querySelector("#knowledgeNetwork"),
-  historyLog: document.querySelector("#historyLog"),
-  finalSummary: document.querySelector("#finalSummary"),
   sessionTitle: document.querySelector("#sessionTitle"),
-  personModal: document.querySelector("#personModal"),
-  openPersonBtn: document.querySelector("#openPersonBtn"),
+  participantChips: document.querySelector("#participantChips"),
+  thread: document.querySelector("#thread"),
+  attachmentInput: document.querySelector("#attachmentInput"),
+  uploadAttachmentBtn: document.querySelector("#uploadAttachmentBtn"),
+  attachmentList: document.querySelector("#attachmentList"),
+  topicSuggestionList: document.querySelector("#topicSuggestionList"),
+  continueBtn: document.querySelector("#continueBtn"),
+  deepenBtn: document.querySelector("#deepenBtn"),
+  concludeBtn: document.querySelector("#concludeBtn"),
   inviteBtn: document.querySelector("#inviteBtn"),
+  personModal: document.querySelector("#personModal"),
   closeModalBtn: document.querySelector("#closeModalBtn"),
   addPersonBtn: document.querySelector("#addPersonBtn"),
   personName: document.querySelector("#personName"),
   personAngle: document.querySelector("#personAngle"),
-  continueBtn: document.querySelector("#continueBtn"),
-  deepenBtn: document.querySelector("#deepenBtn"),
-  concludeBtn: document.querySelector("#concludeBtn"),
-  refreshTopicsBtn: document.querySelector("#refreshTopicsBtn"),
-  topicSuggestionList: document.querySelector("#topicSuggestionList"),
   freeformForm: document.querySelector("#freeformForm"),
   freeformInput: document.querySelector("#freeformInput"),
   sendFreeformBtn: document.querySelector("#sendFreeformBtn"),
@@ -735,22 +720,17 @@ function currentRound() {
   return state.rounds[state.roundIndex] || state.rounds[0];
 }
 
-function renderParticipants() {
-  els.participantList.innerHTML = `
-      <p class="panel-note">${escapeHtml(state.panelNote || "每次开始研讨都会按议题重新邀请名人思想席。")}</p>
-    ${state.participants
-    .map(
-      (person) => `
-        <button class="participant-card ${person.id === state.activeParticipant ? "active" : ""}" data-id="${person.id}" type="button">
-          ${avatarMarkup(person)}
-          <span>
-            <h3>${escapeHtml(person.name)}</h3>
-            <p>${escapeHtml(person.role)}</p>
-          </span>
-        </button>
-      `
-    )
-    .join("")}`;
+function renderParticipantChips() {
+  els.participantChips.innerHTML = state.participants
+    .map((person) => `
+      <div class="p-chip">
+        <span class="p-chip-av" style="background:${escapeHtml(person.color || "#002fa7")}" aria-hidden="true">
+          ${escapeHtml((person.name || "?").slice(0, 1).toUpperCase())}
+        </span>
+        <span class="p-chip-name">${escapeHtml((person.name || "").replace(/\s*思想席$/, ""))}</span>
+      </div>
+    `)
+    .join("");
 }
 
 function renderAttachments() {
@@ -759,11 +739,8 @@ function renderAttachments() {
     ? attachments
         .map(
           (attachment) => `
-            <div class="attachment-item">
-              <span>
-                <b>${escapeHtml(attachment.name)}</b>
-                <span>${escapeHtml(formatBytes(attachment.size))} · ${escapeHtml(String(attachment.text || "").length)} 字</span>
-              </span>
+            <div class="attachment-chip">
+              <span>${escapeHtml(attachment.name)} · ${escapeHtml(formatBytes(attachment.size))}</span>
               <button class="attachment-remove" data-id="${attachment.id}" type="button" aria-label="移除 ${escapeHtml(attachment.name)}">×</button>
             </div>
           `
@@ -777,11 +754,10 @@ function renderTopicSuggestions() {
   els.topicSuggestionList.innerHTML = suggestions.length
     ? suggestions
         .map(
-          (item, index) => `
+          (item) => `
             <button class="topic-suggestion" data-topic="${escapeHtml(item.title)}" type="button">
               <b>${escapeHtml(item.title)}</b>
               <span>${escapeHtml(item.reason)}</span>
-              <em>设为新议题 ${String(index + 1).padStart(2, "0")}</em>
             </button>
           `
         )
@@ -789,275 +765,156 @@ function renderTopicSuggestions() {
     : `<button class="topic-suggestion" type="button" data-topic="${escapeHtml(currentRound()?.next || state.topic)}">
         <b>${escapeHtml(currentRound()?.next || state.topic)}</b>
         <span>基于主持人留下的问题继续推进。</span>
-        <em>设为新议题</em>
       </button>`;
 }
 
-function renderTimeline() {
-  const current = currentRound();
-  els.timelineStrip.innerHTML = timeline
-    .map(
-      (item, index) => `
-        <div class="timeline-step ${index === current.stage ? "active" : ""}">
-          <b>${String(index + 1).padStart(2, "0")}</b>
-          <span>${item}</span>
-        </div>
-      `
-    )
-    .join("");
-}
-
-function renderRoundtableVisual() {
-  els.roundtableVisual.querySelectorAll(".diagram-seat").forEach((seat) => {
-    const index = Number(seat.dataset.seatIndex);
-    const person = state.participants[index];
-    if (!person) {
-      seat.innerHTML = "";
-      seat.removeAttribute("aria-label");
-      seat.removeAttribute("title");
-      return;
-    }
-    seat.innerHTML = `<img src="${getAvatarImage(person)}" alt="" loading="eager" decoding="async" />`;
-    seat.setAttribute("aria-label", person.name);
-    seat.title = person.name;
-  });
-}
-
-function renderTranscript() {
-  const current = currentRound();
-  els.transcript.innerHTML = current.messages
-    .map((message) => {
-      const isModerator = message.type === "moderator" || message.speaker === "主持人";
-      const isUser = message.type === "user" || message.speaker === "你";
-      const person = findParticipantForSpeaker(message.speaker);
-      const avatarSubject = isModerator
-        ? { id: "moderator", name: "主持人" }
-        : isUser
-          ? { id: "user", name: "你" }
-        : person || { id: `speaker-${message.speaker}`, name: message.speaker };
-      return `
-        <article class="message ${isModerator ? "moderator" : ""} ${isUser ? "user-message" : ""}">
-          ${avatarMarkup(avatarSubject, { moderator: isModerator })}
-          <div>
-            <h3 class="speaker-name">${escapeHtml(message.speaker)}<span class="action-chip">${escapeHtml(message.action)}</span></h3>
-            <p class="message-body">${escapeHtml(message.body)}</p>
-            <p class="tldr">简言之：${escapeHtml(message.tldr)}</p>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-}
-
-function renderSynthesis() {
-  const current = currentRound();
-  els.roundBadge.textContent = current.label;
-  els.contradictionTitle.textContent = current.contradiction;
-  els.contradictionCopy.textContent = current.copy;
-  els.moderatorSummary.textContent = current.summary;
-  els.asciiChart.textContent = current.chart;
-  els.nextQuestion.textContent = current.next;
-}
-
-function renderMetrics() {
-  els.metricList.innerHTML = deriveMetrics()
-    .map(
-      ([label, value, width]) => `
-        <div class="metric">
-          <span>${escapeHtml(label)}</span>
-          <b>${escapeHtml(value)}</b>
-          <i style="--value:${width}%"></i>
-        </div>
-      `
-    )
-    .join("");
-}
-
-function renderKnowledge() {
-  els.knowledgeNetwork.innerHTML = deriveKnowledgeItems()
-    .map(
-      ([title, body], index) => `
-        <article class="knowledge-card">
-          <span>${String(index + 1).padStart(2, "0")}</span>
-          <h3>${escapeHtml(title)}</h3>
-          <p>${escapeHtml(body)}</p>
-        </article>
-      `
-    )
-    .join("");
-}
-
-function renderHistory() {
-  els.historyLog.innerHTML = state.rounds
-    .map(
-      (round, index) => `
-        <article class="history-round">
-          <div class="history-head">
-            <span>${String(index + 1).padStart(2, "0")}</span>
-            <div>
-              <h3>${escapeHtml(round.label)} · ${escapeHtml(round.contradiction)}</h3>
-              <p>${escapeHtml(round.summary || "本轮暂无主持综合。")}</p>
-            </div>
-          </div>
-          <div class="history-messages">
-            ${(round.messages || [])
-              .map(
-                (message) => `
-                  <section class="history-message ${message.type === "moderator" ? "moderator-history" : ""}">
-                    <b>${escapeHtml(message.speaker)}｜${escapeHtml(message.action)}</b>
-                    <p>${escapeHtml(message.body)}</p>
-                    <em>简言之：${escapeHtml(message.tldr)}</em>
-                  </section>
-                `
-              )
-              .join("")}
-          </div>
-          <div class="history-footer">
-            <span>下一问题</span>
-            <p>${escapeHtml(round.next || "暂无")}</p>
-          </div>
-        </article>
-      `
-    )
-    .join("");
-}
-
-function renderFinalSummary() {
-  if (!state.finalReport) {
-    els.finalSummary.innerHTML = `
-      <section class="report-empty">
-        <h3>还没有生成结论报告</h3>
-        <p>点击右侧“结论总结”，系统会基于全量历史记录生成一份详细总结，包括核心结论、分歧、行动项、风险和后续追问。</p>
-      </section>
-    `;
-    return;
-  }
-  const report = normalizeFinalReport(state.finalReport, state.topic);
-  els.finalSummary.innerHTML = `
-    <section class="report-hero">
-      <span>${escapeHtml(report.title)}</span>
-      <p>${escapeHtml(report.executiveSummary)}</p>
-    </section>
-    <section class="report-section wide">
-      <h3>核心结论</h3>
-      ${report.coreConclusions
-        .map(
-          (item) => `
-            <article class="conclusion-item">
-              <h4>${escapeHtml(item.title)}</h4>
-              <p>${escapeHtml(item.detail)}</p>
-              ${item.evidence ? `<em>依据：${escapeHtml(item.evidence)}</em>` : ""}
-            </article>
-          `
-        )
-        .join("")}
-    </section>
-    <div class="report-grid">
-      ${renderReportList("已形成共识", report.consensus)}
-      ${renderReportList("仍存在分歧", report.disagreements)}
-      ${renderReportList("关键决策", report.decisions)}
-      ${renderReportList("开放问题", report.openQuestions)}
-      ${renderReportList("风险与缓解", report.risks.map((item) => `${item.risk}｜${item.mitigation}`))}
-      ${renderReportList("后续步骤", report.nextSteps)}
-    </div>
-    <section class="report-section wide">
-      <h3>行动项</h3>
-      <div class="action-list">
-        ${report.actionItems
-          .map(
-            (item) => `
-              <article>
-                <b>${escapeHtml(item.owner)}</b>
-                <p>${escapeHtml(item.action)}</p>
-                <em>${escapeHtml(item.priority)}｜${escapeHtml(item.reason)}</em>
-              </article>
-            `
-          )
-          .join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderReportList(title, items) {
+function buildMessageHtml(message) {
+  const isModerator = message.type === "moderator" || message.speaker === "主持人";
+  const isUser = message.type === "user" || message.speaker === "你";
+  const person = findParticipantForSpeaker(message.speaker);
+  const avatarSubject = isModerator
+    ? { id: "moderator", name: "主持人" }
+    : isUser
+      ? { id: "user", name: "你" }
+    : person || { id: `speaker-${message.speaker}`, name: message.speaker };
   return `
-    <section class="report-section">
-      <h3>${escapeHtml(title)}</h3>
-      <ul>
-        ${(items.length ? items : ["暂无"]).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
-      </ul>
-    </section>
+    <article class="msg${isModerator ? " msg-moderator" : ""}${isUser ? " msg-user" : ""}">
+      ${avatarMarkup(avatarSubject, { moderator: isModerator })}
+      <div class="msg-body">
+        <div class="msg-meta">
+          <span class="msg-name">${escapeHtml(message.speaker)}</span>
+          <span class="action-chip">${escapeHtml(message.action)}</span>
+        </div>
+        <p class="msg-text">${escapeHtml(message.body)}</p>
+        ${message.tldr ? `<p class="tldr">简言之：${escapeHtml(message.tldr)}</p>` : ""}
+      </div>
+    </article>
   `;
+}
+
+function buildSynthesisHtml(round) {
+  if (!round.summary) return "";
+  return `
+    <div class="synthesis">
+      <div class="synthesis-header">
+        <span class="synthesis-kicker">Moderator</span>
+        <span>主持人综述</span>
+      </div>
+      <p class="synthesis-text">${escapeHtml(round.summary)}</p>
+      ${round.chart ? `<pre class="synthesis-ascii">${escapeHtml(round.chart)}</pre>` : ""}
+      ${round.next ? `
+        <div class="next-q-card">
+          <p class="next-q-label">→ 下一问题</p>
+          <p class="next-q-text">${escapeHtml(round.next)}</p>
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function buildFinalReportHtml() {
+  if (!state.finalReport) return "";
+  const report = normalizeFinalReport(state.finalReport, state.topic);
+  const renderList = (items) => items.length
+    ? `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+    : `<p class="empty-note">暂无</p>`;
+  return `
+    <div class="final-report-card">
+      <span class="final-report-kicker">Final Report</span>
+      <h3 class="final-report-title">${escapeHtml(report.title)}</h3>
+      <p class="final-report-summary">${escapeHtml(report.executiveSummary)}</p>
+      <div class="final-report-conclusions">
+        ${report.coreConclusions.map((item) => `
+          <div class="conclusion-item">
+            <h4>${escapeHtml(item.title)}</h4>
+            <p>${escapeHtml(item.detail)}</p>
+            ${item.evidence ? `<em>依据：${escapeHtml(item.evidence)}</em>` : ""}
+          </div>
+        `).join("")}
+      </div>
+      <div class="final-report-grid">
+        <div><h4>已形成共识</h4>${renderList(report.consensus)}</div>
+        <div><h4>仍存在分歧</h4>${renderList(report.disagreements)}</div>
+        <div><h4>关键决策</h4>${renderList(report.decisions)}</div>
+        <div><h4>开放问题</h4>${renderList(report.openQuestions)}</div>
+      </div>
+      ${report.actionItems.length ? `
+        <div class="action-items">
+          <h4>行动项</h4>
+          ${report.actionItems.map((item) => `
+            <div class="action-item">
+              <b>${escapeHtml(item.owner)}</b>
+              <span>${escapeHtml(item.action)}</span>
+              <em>${escapeHtml(item.priority)}</em>
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function renderThread() {
+  const rounds = state.rounds.slice(0, state.roundIndex + 1);
+  let html = "";
+  rounds.forEach((round) => {
+    html += `<div class="round-divider" role="separator"><span>${escapeHtml(round.label)}${round.contradiction ? ` · ${escapeHtml(round.contradiction)}` : ""}</span></div>`;
+    (round.messages || []).forEach((message) => { html += buildMessageHtml(message); });
+    html += buildSynthesisHtml(round);
+  });
+  if (state.completed && state.finalReport) {
+    html += buildFinalReportHtml();
+  }
+  els.thread.innerHTML = html;
+  requestAnimationFrame(() => { els.thread.scrollTop = els.thread.scrollHeight; });
 }
 
 function renderSessions() {
   const saved = loadSavedSessions();
-  const updated = formatTime(state.updatedAt);
+  const others = saved.filter((s) => s.id !== state.id);
   const modeLabel =
     apiStatus.mode === "llm"
       ? apiStatus.model || "LLM"
       : apiStatus.mode === "checking"
         ? "检测中"
         : "离线";
-  els.sessionMeta.innerHTML = `
-    <div><span>当前</span><b>${state.completed ? "已结论" : "研讨中"}</b></div>
-    <div><span>轮次</span><b>${state.rounds.length}</b></div>
-    <div><span>生成</span><b>${escapeHtml(modeLabel)}</b></div>
-    <div><span>更新</span><b>${updated}</b></div>
+  els.savedSessionList.innerHTML = `
+    <div class="group-label">当前</div>
+    <div class="session-item session-current" role="listitem">
+      <div class="session-item-title">${escapeHtml(state.topic)}</div>
+      <div class="session-item-meta">${state.rounds.length} 轮 · ${escapeHtml(modeLabel)}${state.completed ? " · 已结论" : ""}</div>
+    </div>
+    ${others.length ? `
+      <div class="group-label">历史</div>
+      ${others.slice(0, 20).map((item) => `
+        <button class="session-item" data-id="${escapeHtml(item.id)}" type="button">
+          <div class="session-item-title">${escapeHtml(item.topic.length > 36 ? item.topic.slice(0, 36) + "…" : item.topic)}</div>
+          <div class="session-item-meta">${item.rounds.length} 轮 · ${formatTime(item.updatedAt)}</div>
+        </button>
+      `).join("")}
+    ` : ""}
   `;
-  els.savedSessionList.innerHTML =
-    saved.length === 0
-      ? `<p class="empty-state">还没有保存的会话。</p>`
-      : saved
-          .map(
-            (item) => `
-              <button class="saved-session" data-id="${item.id}" type="button">
-                <span>${escapeHtml(item.topic.length > 24 ? `${item.topic.slice(0, 24)}…` : item.topic)}</span>
-                <small>${item.rounds.length} 轮 · ${formatTime(item.updatedAt)}</small>
-              </button>
-            `
-          )
-          .join("");
-}
-
-function renderView() {
-  document.querySelectorAll(".view").forEach((view) => view.classList.remove("active-view"));
-  const activeView = document.querySelector(`#${state.activeView}View`) || document.querySelector("#debateView");
-  activeView.classList.add("active-view");
-  if (!document.querySelector(`#${state.activeView}View`)) state.activeView = "debate";
-  document.querySelectorAll(".tab-btn").forEach((button) => {
-    const selected = button.dataset.view === state.activeView;
-    button.classList.toggle("active", selected);
-    button.setAttribute("aria-selected", String(selected));
-  });
 }
 
 function renderAll() {
-  const title = state.topic.length > 22 ? `${state.topic.slice(0, 22)}…` : state.topic;
-  els.topicInput.value = state.topic;
+  const title = state.topic.length > 30 ? `${state.topic.slice(0, 30)}…` : state.topic;
   els.sessionTitle.textContent = title;
+  els.topicInput.value = state.topic;
+  renderParticipantChips();
   renderAttachments();
-  renderParticipants();
-  renderTimeline();
-  renderRoundtableVisual();
-  renderTranscript();
-  renderSynthesis();
-  renderMetrics();
-  renderKnowledge();
-  renderHistory();
-  renderFinalSummary();
   renderTopicSuggestions();
+  renderThread();
   renderSessions();
   renderBusy();
-  renderView();
   persistCurrent();
 }
 
 function renderBusy() {
-  [els.startBtn, els.continueBtn, els.deepenBtn, els.concludeBtn, els.addPersonBtn, els.sendFreeformBtn, els.refreshTopicsBtn, els.uploadAttachmentBtn].forEach((button) => {
+  [els.startBtn, els.continueBtn, els.deepenBtn, els.concludeBtn,
+   els.addPersonBtn, els.sendFreeformBtn, els.uploadAttachmentBtn].forEach((button) => {
     if (button) button.disabled = isBusy;
   });
-  els.continueBtn.textContent = isBusy ? "生成中" : "可";
+  if (els.continueBtn) els.continueBtn.textContent = isBusy ? "生成中…" : "继续 →";
   if (els.sendFreeformBtn) els.sendFreeformBtn.textContent = isBusy ? "生成中" : "发送";
 }
 
@@ -1094,7 +951,7 @@ function addPerson() {
       speaker: "主持人",
       action: "引入",
       type: "moderator",
-      body: `欢迎 ${name} 加入圆桌。请从“${role}”角度对当前矛盾提出一个新的判断。`,
+      body: `欢迎 ${name} 加入圆桌。请从"${role}"角度对当前矛盾提出一个新的判断。`,
       tldr: "新视角已进入当前轮次。",
     },
     {
@@ -1225,7 +1082,6 @@ async function submitFreeform(event) {
   const generated = await generateRoundPreferred("freeform", { userPrompt });
   state.rounds.push(withUserPromptMessage(generated, userPrompt));
   state.roundIndex = state.rounds.length - 1;
-  state.activeView = "debate";
   touch();
   await refreshTopicSuggestions({ silent: true });
   renderAll();
@@ -1271,11 +1127,12 @@ async function refreshTopicSuggestions({ silent = false } = {}) {
 function applySuggestedTopic(title) {
   if (!title) return;
   els.topicInput.value = title;
-  showToast("已填入左侧议题，点击开始研讨即可开启新圆桌");
+  showToast("已填入议题，点击【开始研讨】即可开启新圆桌");
 }
 
 async function startSession() {
   if (isBusy) return;
+  closeNewSessionModal();
   setBusy(true);
   const topic = els.topicInput.value.trim() || initialTopic;
   const attachments = state.attachments || [];
@@ -1289,11 +1146,17 @@ async function startSession() {
   setBusy(false);
 }
 
-function newSession() {
-  archiveCurrentSession({ silent: true });
-  state = createFreshState(initialTopic);
-  renderAll();
-  showToast("已创建空白会话");
+function openNewSessionModal() {
+  els.topicInput.value = state.topic;
+  els.newSessionModal.setAttribute("aria-hidden", "false");
+  els.newSessionModal.classList.add("open");
+  els.topicInput.focus();
+  refreshTopicSuggestions({ silent: true });
+}
+
+function closeNewSessionModal() {
+  els.newSessionModal.setAttribute("aria-hidden", "true");
+  els.newSessionModal.classList.remove("open");
 }
 
 async function continueRound() {
@@ -1309,7 +1172,6 @@ async function continueRound() {
     state.rounds.push(await generateRoundPreferred("continue"));
     state.roundIndex = state.rounds.length - 1;
   }
-  state.activeView = "debate";
   touch();
   await refreshTopicSuggestions({ silent: true });
   renderAll();
@@ -1322,7 +1184,6 @@ async function deepen() {
   setBusy(true);
   state.rounds.push(await generateRoundPreferred("deepen"));
   state.roundIndex = state.rounds.length - 1;
-  state.activeView = "debate";
   touch();
   await refreshTopicSuggestions({ silent: true });
   renderAll();
@@ -1347,7 +1208,6 @@ async function conclude() {
     state.finalReport = normalizeFinalReport((await requestModelFinalReport()) || buildLocalFinalReport());
     state.completed = true;
   }
-  state.activeView = "summary";
   touch();
   renderAll();
   archiveCurrentSession({ silent: true });
@@ -1756,17 +1616,8 @@ function showToast(message) {
   toastTimer = setTimeout(() => els.toast.classList.remove("show"), 1800);
 }
 
-els.participantList.addEventListener("click", (event) => {
-  const card = event.target.closest(".participant-card");
-  if (!card) return;
-  state.activeParticipant = card.dataset.id;
-  touch();
-  renderParticipants();
-  persistCurrent();
-});
-
 els.savedSessionList.addEventListener("click", (event) => {
-  const item = event.target.closest(".saved-session");
+  const item = event.target.closest(".session-item[data-id]");
   if (!item) return;
   loadSession(item.dataset.id);
 });
@@ -1789,31 +1640,21 @@ els.topicSuggestionList.addEventListener("click", (event) => {
   applySuggestedTopic(button.dataset.topic);
 });
 
-document.querySelectorAll(".tab-btn").forEach((button) => {
-  button.addEventListener("click", () => {
-    state.activeView = button.dataset.view;
-    touch();
-    renderView();
-    persistCurrent();
-  });
-});
-
 els.startBtn.addEventListener("click", startSession);
 els.resetBtn.addEventListener("click", () => {
-  archiveCurrentSession({ silent: true });
-  state = createFreshState(initialTopic);
-  renderAll();
+  els.topicInput.value = initialTopic;
   showToast("已重置为默认议题");
 });
-els.newSessionBtn.addEventListener("click", newSession);
-els.saveSessionBtn.addEventListener("click", saveCurrentSession);
-els.clearSavedBtn.addEventListener("click", clearSavedSessions);
+els.newSessionBtn.addEventListener("click", openNewSessionModal);
+els.closeNewSessionBtn.addEventListener("click", closeNewSessionModal);
+els.newSessionModal.addEventListener("click", (event) => {
+  if (event.target === els.newSessionModal) closeNewSessionModal();
+});
+
 els.continueBtn.addEventListener("click", continueRound);
 els.deepenBtn.addEventListener("click", deepen);
 els.concludeBtn.addEventListener("click", conclude);
-els.refreshTopicsBtn.addEventListener("click", () => refreshTopicSuggestions());
 els.freeformForm.addEventListener("submit", submitFreeform);
-els.openPersonBtn.addEventListener("click", openModal);
 els.inviteBtn.addEventListener("click", openModal);
 els.closeModalBtn.addEventListener("click", closeModal);
 els.addPersonBtn.addEventListener("click", addPerson);
@@ -1825,7 +1666,10 @@ els.personModal.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeModal();
+  if (event.key === "Escape") {
+    closeModal();
+    closeNewSessionModal();
+  }
   if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
     if (document.activeElement === els.freeformInput) {
       event.preventDefault();

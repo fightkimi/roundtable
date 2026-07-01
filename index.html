@@ -3,277 +3,89 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>圆桌研讨室 · AI-Coding 协作治理</title>
+    <title>圆桌研讨室</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <aside class="left-rail" aria-label="研讨配置">
-        <div class="brand-lockup">
-          <div class="brand-mark">RT</div>
-          <div>
-            <p class="eyebrow">Roundtable Seminar</p>
-            <h1>圆桌研讨室</h1>
+    <div class="shell">
+
+      <!-- ── SIDEBAR ── -->
+      <aside class="sidebar" aria-label="会话管理">
+        <div class="sidebar-head">
+          <div class="brand-lockup">
+            <div class="brand-mark">RT</div>
+            <div>
+              <p class="eyebrow">Roundtable Seminar</p>
+              <h1>圆桌研讨室</h1>
+            </div>
           </div>
+          <button id="newSessionBtn" class="new-session-btn" type="button">＋ 新建讨论</button>
         </div>
-
-        <section class="panel session-panel" aria-labelledby="session-list-title">
-          <div class="section-head row-head">
-            <div>
-              <span class="section-kicker">Sessions</span>
-              <h2 id="session-list-title">会话</h2>
-            </div>
-            <button id="newSessionBtn" class="icon-btn" type="button" aria-label="新建会话">↻</button>
-          </div>
-          <div id="sessionMeta" class="session-meta"></div>
-          <div class="session-actions">
-            <button id="saveSessionBtn" class="primary-btn" type="button">保存当前</button>
-            <button id="clearSavedBtn" class="ghost-btn" type="button">清空历史</button>
-          </div>
-          <div id="savedSessionList" class="saved-session-list"></div>
-        </section>
-
-        <section class="panel" aria-labelledby="people-title">
-          <div class="section-head row-head">
-            <div>
-              <span class="section-kicker">Guests</span>
-              <h2 id="people-title">本题嘉宾</h2>
-            </div>
-            <button id="openPersonBtn" class="icon-btn" type="button" aria-label="引入新人物">+</button>
-          </div>
-          <div id="participantList" class="participant-list"></div>
-        </section>
-
-        <section class="panel compact-panel" aria-labelledby="rules-title">
-          <div class="section-head">
-            <span class="section-kicker">Protocol</span>
-            <h2 id="rules-title">会场协议</h2>
-          </div>
-          <div class="rule-list">
-            <div><span>01</span>先定义概念</div>
-            <div><span>02</span>显化矛盾</div>
-            <div><span>03</span>生成框架</div>
-            <div><span>04</span>沉淀网络</div>
-          </div>
-        </section>
+        <div id="savedSessionList" class="session-list" role="list"></div>
       </aside>
 
-      <main class="workspace">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">Live Session</p>
-            <h2 id="sessionTitle">AI-Coding 协作治理圆桌</h2>
+      <!-- ── CONVERSATION ── -->
+      <main class="conversation">
+
+        <header class="conv-header">
+          <div class="conv-topic-wrap">
+            <h2 id="sessionTitle" class="conv-topic">圆桌研讨室</h2>
+            <div id="participantChips" class="participant-chips"></div>
           </div>
-          <div class="view-tabs" role="tablist" aria-label="视图">
-            <button class="tab-btn active" data-view="debate" role="tab" aria-selected="true" type="button">研讨台</button>
-            <button class="tab-btn" data-view="map" role="tab" aria-selected="false" type="button">机制地图</button>
-            <button class="tab-btn" data-view="network" role="tab" aria-selected="false" type="button">知识网络</button>
-            <button class="tab-btn" data-view="history" role="tab" aria-selected="false" type="button">历史记录</button>
-            <button class="tab-btn" data-view="summary" role="tab" aria-selected="false" type="button">结论报告</button>
+          <div class="header-actions">
+            <button id="copyMarkdownBtn" class="ghost-btn" type="button">复制纪要</button>
+            <button id="exportMarkdownBtn" class="ghost-btn" type="button">导出 MD</button>
           </div>
         </header>
 
-        <section id="debateView" class="view active-view" aria-label="研讨台">
-          <div class="stage-panel">
-            <div class="stage-copy">
-              <p class="eyebrow">Current Contradiction</p>
-              <h2 id="contradictionTitle">效率释放 vs 责任可控</h2>
-              <p id="contradictionCopy">AI-Coding 的治理重点不是限制模型，而是让 AI 的行动半径被上下文、边界和证据包住。</p>
-            </div>
+        <div id="thread" class="thread" role="log" aria-live="polite" aria-label="研讨对话"></div>
 
-            <div id="roundtableVisual" class="roundtable-visual" aria-label="圆桌结构示意">
-              <div class="diagram-label top-left">AI-Ready Context</div>
-              <div class="diagram-label top-right">Human Judgment</div>
-              <div class="diagram-core">
-                <span>ROUND</span>
-                <strong>TRUTH-SEEKING</strong>
-                <em>governed dialogue</em>
-              </div>
-              <div class="diagram-seat s1" data-seat-index="0"></div>
-              <div class="diagram-seat s2" data-seat-index="1"></div>
-              <div class="diagram-seat s3" data-seat-index="2"></div>
-              <div class="diagram-seat s4" data-seat-index="3"></div>
-              <div class="diagram-seat s5" data-seat-index="4"></div>
-              <div class="diagram-label bottom-left">Evidence</div>
-              <div class="diagram-label bottom-right">Boundary</div>
-            </div>
-          </div>
-
-          <div class="timeline-strip" id="timelineStrip" aria-label="研讨阶段"></div>
-
-          <section class="transcript-panel" aria-labelledby="transcript-title">
-            <div class="section-head row-head">
-              <div>
-                <span class="section-kicker">Dialogue</span>
-                <h2 id="transcript-title">圆桌记录</h2>
-              </div>
-              <span id="roundBadge" class="status-badge">Round 1</span>
-            </div>
-            <div id="transcript" class="transcript"></div>
-          </section>
-        </section>
-
-        <section id="mapView" class="view" aria-label="机制地图">
-          <div class="map-grid">
-            <article class="mechanism-block accent-context">
-              <span>Context</span>
-              <h3>上下文</h3>
-              <p>AI-Ready 需求、Agent Spec、范例库、失败样本库。</p>
-            </article>
-            <article class="mechanism-block accent-boundary">
-              <span>Boundary</span>
-              <h3>边界</h3>
-              <p>CODEOWNERS、可碰路径、风险等级、关键动作确认。</p>
-            </article>
-            <article class="mechanism-block accent-evidence">
-              <span>Evidence</span>
-              <h3>证据</h3>
-              <p>CI、评估器、审计轨迹、知识库写回。</p>
-            </article>
-          </div>
-
-          <div class="flow-board" aria-label="AI-Coding 运行机制">
-            <div class="flow-step">
-              <b>01</b>
-              <span>议题输入</span>
-              <small>Topic + context</small>
-            </div>
-            <div class="flow-step">
-              <b>02</b>
-              <span>席位生成</span>
-              <small>Perspectives</small>
-            </div>
-            <div class="flow-step">
-              <b>03</b>
-              <span>交锋推进</span>
-              <small>Dialectic rounds</small>
-            </div>
-            <div class="flow-step">
-              <b>04</b>
-              <span>框架综合</span>
-              <small>ASCII + synthesis</small>
-            </div>
-            <div class="flow-step">
-              <b>05</b>
-              <span>知识沉淀</span>
-              <small>Network</small>
-            </div>
-          </div>
-
-          <div class="risk-matrix">
-            <div class="section-head">
-              <span class="section-kicker">Governance</span>
-              <h2>风险刻度</h2>
-            </div>
-            <div class="risk-row"><span>L0</span><b>只读分析</b><em>自动</em></div>
-            <div class="risk-row"><span>L1</span><b>低风险改动</b><em>AI 提 PR，人 review</em></div>
-            <div class="risk-row"><span>L2</span><b>影响协作边界</b><em>策划案先 approved</em></div>
-            <div class="risk-row"><span>L3</span><b>生产 / 权限 / 外部承诺</b><em>只给方案，不自动执行</em></div>
-          </div>
-        </section>
-
-        <section id="networkView" class="view" aria-label="知识网络">
-          <div class="knowledge-header">
-            <p class="eyebrow">Knowledge Network</p>
-            <h2>从讨论沉淀到组织机制</h2>
-          </div>
-          <div id="knowledgeNetwork" class="knowledge-grid"></div>
-        </section>
-
-        <section id="historyView" class="view" aria-label="历史记录">
-          <div class="knowledge-header">
-            <p class="eyebrow">Full Transcript</p>
-            <h2>全量历史记录</h2>
-          </div>
-          <div id="historyLog" class="history-log"></div>
-        </section>
-
-        <section id="summaryView" class="view" aria-label="结论报告">
-          <div class="knowledge-header">
-            <p class="eyebrow">Final Report</p>
-            <h2>核心结论总结</h2>
-          </div>
-          <div id="finalSummary" class="final-report"></div>
-        </section>
-
-        <section class="composer-panel" aria-labelledby="composer-title">
-          <div class="topic-launch" aria-labelledby="topic-title">
-            <div class="section-head row-head">
-              <div>
-                <span class="section-kicker">Start Topic</span>
-                <h2 id="topic-title">开始议题</h2>
-              </div>
-              <div class="topic-actions compact-actions">
-                <button id="resetBtn" class="ghost-btn" type="button">重置</button>
-                <button id="startBtn" class="primary-btn" type="button">开始研讨</button>
-              </div>
-            </div>
-            <label class="sr-only" for="topicInput">议题</label>
-            <textarea id="topicInput" rows="3">AI-Coding 协作治理如何从机制思考落成可运行的组织协作系统？</textarea>
-            <div class="attachment-uploader" aria-label="议题附件">
-              <input id="attachmentInput" class="sr-only" type="file" multiple accept=".txt,.md,.markdown,.html,.htm,.json,.csv,.log,.js,.jsx,.ts,.tsx,.css,.py" />
-              <button id="uploadAttachmentBtn" class="ghost-btn attachment-btn" type="button">上传附件</button>
-              <p>支持文本、Markdown、HTML、JSON 等内容，附件会作为研讨上下文进入模型。</p>
-              <div id="attachmentList" class="attachment-list"></div>
-            </div>
-          </div>
-          <div class="section-head row-head">
-            <div>
-              <span class="section-kicker">Next Topic</span>
-              <h2 id="composer-title">下一个议题推荐</h2>
-            </div>
-            <button id="refreshTopicsBtn" class="icon-btn" type="button" aria-label="重新生成议题推荐">↻</button>
-          </div>
-          <div id="topicSuggestionList" class="topic-suggestion-list"></div>
-          <form id="freeformForm" class="freeform-form">
-            <label class="sr-only" for="freeformInput">自主对话输入</label>
-            <textarea id="freeformInput" rows="2" placeholder="在这里追问、质疑、指定某位嘉宾继续展开，圆桌会围绕你的输入生成下一轮回应。"></textarea>
-            <button id="sendFreeformBtn" class="primary-btn" type="submit">发送</button>
+        <footer class="command-bar">
+          <div id="attachmentList" class="attachment-list-bar"></div>
+          <form id="freeformForm" class="freeform-row">
+            <label class="sr-only" for="freeformInput">追问</label>
+            <textarea id="freeformInput" class="freeform-input" rows="1"
+              placeholder="追问、质疑、或指定某位嘉宾继续展开…（Cmd+Enter 发送）"></textarea>
+            <button id="sendFreeformBtn" class="send-btn" type="submit">发送</button>
           </form>
-        </section>
+          <div class="quick-actions">
+            <button id="continueBtn" class="act-btn act-primary" type="button">继续 →</button>
+            <button id="deepenBtn" class="act-btn" type="button">深入此节</button>
+            <button id="inviteBtn" class="act-btn" type="button">引入新人物</button>
+            <button id="concludeBtn" class="act-btn act-dark" type="button">结论总结</button>
+            <div class="acts-right">
+              <button id="uploadAttachmentBtn" class="act-btn" type="button">附件上传</button>
+              <input id="attachmentInput" class="sr-only" type="file" multiple
+                accept=".txt,.md,.markdown,.html,.htm,.json,.csv,.log,.js,.jsx,.ts,.tsx,.css,.py" />
+            </div>
+          </div>
+        </footer>
+
       </main>
-
-      <aside class="right-rail" aria-label="主持综合">
-        <section class="panel moderator-panel">
-          <div class="section-head">
-            <span class="section-kicker">Moderator</span>
-            <h2>主持人综合</h2>
-          </div>
-          <p id="moderatorSummary" class="moderator-summary">本轮核心不是“要不要让 AI 多做”，而是“AI 做事时，组织是否有足够的上下文、边界和证据”。</p>
-          <pre id="asciiChart" class="ascii-chart"></pre>
-          <div class="next-question">
-            <span>下一问题</span>
-            <p id="nextQuestion">如果只允许从最小可行治理开始，第一批必须建立的机制是哪三件？</p>
-          </div>
-        </section>
-
-        <section class="panel command-panel" aria-labelledby="command-title">
-          <div class="section-head">
-            <span class="section-kicker">Commands</span>
-            <h2 id="command-title">指令</h2>
-          </div>
-          <div class="command-grid">
-            <button id="continueBtn" type="button">可</button>
-            <button id="deepenBtn" type="button">深入此节</button>
-            <button id="inviteBtn" type="button">引入新人物</button>
-            <button id="concludeBtn" type="button">结论总结</button>
-          </div>
-          <div class="utility-grid">
-            <button id="copyMarkdownBtn" type="button">复制纪要</button>
-            <button id="exportMarkdownBtn" type="button">导出 MD</button>
-          </div>
-        </section>
-
-        <section class="panel metrics-panel" aria-labelledby="metrics-title">
-          <div class="section-head">
-            <span class="section-kicker">Signals</span>
-            <h2 id="metrics-title">运行信号</h2>
-          </div>
-          <div id="metricList" class="metric-list"></div>
-        </section>
-      </aside>
     </div>
 
+    <!-- New Session Modal -->
+    <div id="newSessionModal" class="modal-backdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="new-session-title">
+        <div class="section-head row-head">
+          <div>
+            <span class="section-kicker">New Session</span>
+            <h2 id="new-session-title">新建讨论</h2>
+          </div>
+          <button id="closeNewSessionBtn" class="icon-btn" type="button" aria-label="关闭">×</button>
+        </div>
+        <p class="modal-hint">输入你想探讨的议题，AI 会自动邀请最合适的思想席嘉宾</p>
+        <label for="topicInput">议题</label>
+        <textarea id="topicInput" rows="3">AI-Coding 协作治理如何从机制思考落成可运行的组织协作系统？</textarea>
+        <div id="topicSuggestionList" class="topic-suggestion-list"></div>
+        <div class="modal-footer">
+          <button id="resetBtn" class="ghost-btn" type="button">重置</button>
+          <button id="startBtn" class="primary-btn" type="button">开始研讨</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Person Modal -->
     <div id="personModal" class="modal-backdrop" aria-hidden="true">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="section-head row-head">
@@ -297,7 +109,6 @@
     </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
     <script src="./app.js"></script>
   </body>
 </html>
