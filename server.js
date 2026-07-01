@@ -94,7 +94,9 @@ const server = http.createServer(async (req, res) => {
       return text(res, 404, "Not found");
     }
     const ext = path.extname(filePath);
-    res.writeHead(200, { "Content-Type": MIME[ext] || "application/octet-stream" });
+    const headers = { "Content-Type": MIME[ext] || "application/octet-stream" };
+    if ([".js", ".css"].includes(ext)) headers["Cache-Control"] = "no-store";
+    res.writeHead(200, headers);
     if (req.method === "HEAD") return res.end();
     return fs.createReadStream(filePath).pipe(res);
   } catch (error) {
