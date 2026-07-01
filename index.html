@@ -95,15 +95,11 @@
           </div>
           <button id="closeModalBtn" class="icon-btn" type="button" aria-label="关闭">×</button>
         </div>
+        <p class="modal-hint">输入任意真实人物、历史思想家或虚构角色，AI 会以其视角发言</p>
         <label for="personName">人物 / 席位</label>
-        <input id="personName" type="text" value="组织学习负责人" />
-        <label for="personAngle">关注角度</label>
-        <select id="personAngle">
-          <option>人才梯队与训练机制</option>
-          <option>安全治理与权限边界</option>
-          <option>产品体验与采用率</option>
-          <option>工程质量与交付效率</option>
-        </select>
+        <input id="personName" type="text" placeholder="如：苏格拉底、女性主义理论家、行为经济学家…" autocomplete="off" />
+        <label for="personAngle">此人带来的视角</label>
+        <input id="personAngle" type="text" placeholder="如：用身体现象学质疑理性假设、补充进化心理学证据…" autocomplete="off" />
         <button id="addPersonBtn" class="primary-btn wide-btn" type="button">加入圆桌</button>
       </div>
     </div>

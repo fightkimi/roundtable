@@ -919,6 +919,8 @@ function renderBusy() {
 }
 
 function openModal() {
+  els.personName.value = "";
+  els.personAngle.value = "";
   els.personModal.classList.add("open");
   els.personModal.setAttribute("aria-hidden", "false");
   els.personName.focus();
@@ -930,8 +932,9 @@ function closeModal() {
 }
 
 function addPerson() {
-  const name = els.personName.value.trim() || "新席位";
-  const role = els.personAngle.value;
+  const name = els.personName.value.trim();
+  if (!name) { showToast("请输入人物名称"); els.personName.focus(); return; }
+  const role = els.personAngle.value.trim() || "补充独特视角";
   const id = createId("person");
   const person = {
     id,
