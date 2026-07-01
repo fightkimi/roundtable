@@ -826,3 +826,25 @@ label { display: block; margin: 14px 0 6px; font-size: 13px; font-weight: 700; c
   white-space: nowrap;
 }
 .toast.show { opacity: 1; }
+
+/* ── Thread generating indicator ────────────────────────────── */
+.thread-generating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.generating-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}

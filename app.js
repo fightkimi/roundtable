@@ -1049,6 +1049,9 @@ function renderThread() {
   if (state.completed && state.finalReport) {
     html += buildFinalReportHtml();
   }
+  if (isBusy) {
+    html += `<div class="thread-generating"><span class="generating-dot"></span><span class="generating-text">AI 正在生成研讨内容…</span></div>`;
+  }
   els.thread.innerHTML = html;
   requestAnimationFrame(() => { els.thread.scrollTop = els.thread.scrollHeight; });
 }
@@ -1325,8 +1328,12 @@ async function startSession() {
   const attachments = state.attachments || [];
   archiveCurrentSession({ silent: true });
   state = createFreshState(topic, attachments);
+  renderAll();                         // 立即渲染本地草稿，用户可见内容
   await replacePanelFromApi(topic);
+  renderParticipantChips();            // 嘉宾确认后立即更新头像芯片
+  renderSessions();
   await replaceCurrentRoundFromApi("initiate");
+  renderThread();                      // 首轮 AI 内容就绪后更新对话流
   await refreshTopicSuggestions({ silent: true });
   renderAll();
   showToast(apiStatus.mode === "llm" ? "已动态组局并开始研讨" : "已本地组局并开始研讨");
